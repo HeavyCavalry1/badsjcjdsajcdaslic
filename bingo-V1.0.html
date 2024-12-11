@@ -1,4 +1,4 @@
-<html><head><base href=""></head><style>
+<html><head><base href=""><style>
     body {
         font-family: Arial, sans-serif;
         display: flex;
@@ -69,7 +69,7 @@
     }
 
     .reset-button {
-        margin: 20px;
+        margin: 20px 10px;  /* Updated margin to add space between buttons */
         padding: 10px 20px;
         font-size: 16px;
         background-color: #2196F3;
@@ -118,6 +118,13 @@
         width: 90%;
         position: relative;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .modal-content h2 {
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #333;
     }
 
     .close-button {
@@ -208,7 +215,8 @@
 <body>
     <h1 class="title">任务抽取系统</h1>
     <div class="grid-container" id="grid"></div>
-    <button class="reset-button" onclick="showResetModal()">重置所有题目</button>
+    <button class="reset-button" onclick="showResetModal()">重置所有任务</button>
+    <button class="reset-button" onclick="showRandomModal()">随机抽取</button>
 
     <div class="password-section">
         <input type="password" id="password" placeholder="输入密码">
@@ -217,18 +225,18 @@
 
     <div class="editor-panel" id="editorPanel">
         <button class="close-editor-btn" onclick="closeEditor()">×</button>
-        <h2>题目编辑器</h2>
+        <h2>任务编辑器</h2>
         <div class="question-editor">
             <select id="questionSelect"></select>
-            <textarea id="questionContent" placeholder="输入题目内容"></textarea>
-            <button onclick="saveQuestion()">保存题目</button>
+            <textarea id="questionContent" placeholder="输入任务内容"></textarea>
+            <button onclick="saveQuestion()">保存任务</button>
         </div>
     </div>
 
     <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close-button" onclick="closeModal()">×</span>
-            <h2>题目内容</h2>
+            <h2>任务内容</h2>
             <p id="modalContent"></p>
         </div>
     </div>
@@ -242,6 +250,29 @@
             <div class="reset-buttons">
                 <button class="reset-cancel-btn" onclick="closeResetModal()">取消</button>
                 <button class="reset-confirm-btn" onclick="confirmReset()">确认重置</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="randomModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeRandomModal()">×</span>
+            <h2>随机抽取确认</h2>
+            <p>是否确认随机抽取一道任务？</p>
+            <div class="reset-buttons">
+                <button class="reset-cancel-btn" onclick="closeRandomModal()">取消</button>
+                <button class="reset-confirm-btn" onclick="selectRandomQuestion()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeSuccessModal()">×</span>
+            <h2 id="successTitle"></h2>
+            <p id="successMessage"></p>
+            <div class="reset-buttons">
+                <button class="reset-confirm-btn" onclick="closeSuccessModal()">确定</button>
             </div>
         </div>
     </div>
@@ -285,6 +316,27 @@
             }
         }
 
+        function showRandomModal() {
+            document.getElementById('randomModal').style.display = 'flex';
+        }
+
+        function closeRandomModal() {
+            document.getElementById('randomModal').style.display = 'none';
+        }
+
+        function selectRandomQuestion() {
+            let availableNumbers = [];
+            for (let i = 1; i <= 81; i++) {
+                availableNumbers.push(i);
+            }
+            
+            const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+            const selectedNumber = availableNumbers[randomIndex];
+            
+            closeRandomModal();
+            showQuestion(selectedNumber);
+        }
+
         function createGrid() {
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
@@ -313,7 +365,12 @@
         function showQuestion(number) {
             const modal = document.getElementById('modal');
             const modalContent = document.getElementById('modalContent');
-            modalContent.textContent = questions[number] || `题目 ${number} 的内容`;
+            modalContent.textContent = questions[number] || `任务 ${number} 的内容`;
+            
+            // Update the modal title to show the task number
+            const modalTitle = modal.querySelector('h2');
+            modalTitle.textContent = `任务 ${number}`;
+            
             modal.style.display = 'flex';
             
             clickCounts[number] = (clickCounts[number] || 0) + 1;
@@ -329,7 +386,7 @@
             Object.keys(clickCounts).forEach(key => delete clickCounts[key]);
             saveQuestions();
             createGrid();
-            alert('重置成功！');
+            showSuccessModal('重置成功', '所有任务状态已重置！');
         }
 
         function checkPassword() {
@@ -353,7 +410,7 @@
             for (let i = 1; i <= 81; i++) {
                 const option = document.createElement('option');
                 option.value = i;
-                option.textContent = `题目 ${i}`;
+                option.textContent = `任务 ${i}`;
                 select.appendChild(option);
             }
             
@@ -371,17 +428,37 @@
             const content = document.getElementById('questionContent').value;
             questions[number] = content;
             saveQuestions();
-            alert('保存成功！');
+            showSuccessModal('保存成功', '任务内容已保存！');
+        }
+
+        function showSuccessModal(title, message) {
+            const modal = document.getElementById('successModal');
+            document.getElementById('successTitle').textContent = title;
+            document.getElementById('successMessage').textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
         }
 
         window.onclick = function(event) {
             const modal = document.getElementById('modal');
             const resetModal = document.getElementById('resetModal');
+            const randomModal = document.getElementById('randomModal');
+            const successModal = document.getElementById('successModal');
+            
             if (event.target == modal) {
                 modal.style.display = 'none';
             }
             if (event.target == resetModal) {
                 resetModal.style.display = 'none';
+            }
+            if (event.target == randomModal) {
+                randomModal.style.display = 'none';
+            }
+            if (event.target == successModal) {
+                successModal.style.display = 'none';
             }
         }
 
