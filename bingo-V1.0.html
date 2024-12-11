@@ -1,0 +1,391 @@
+<html><head><base href=""></head><style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #f0f0f0;
+        position: relative;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        gap: 10px;
+        padding: 20px;
+        max-width: 800px;
+    }
+
+    .number-box {
+        width: 60px;
+        height: 60px;
+        background-color: #ffffff;
+        border: 2px solid #333;
+        border-radius: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .number-box:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    .click-count {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 12px;
+        background-color: #ff4444;
+        color: white;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+    }
+
+    .selected { 
+        background-color: #4CAF50; 
+        color: white; 
+    }
+
+    .selected[data-clicks="2"] { background-color: #3d8b40; }
+    .selected[data-clicks="3"] { background-color: #2d6a30; }
+    .selected[data-clicks="4"] { background-color: #1d4820; }
+    .selected[data-clicks="5"] { background-color: #0d2610; }
+
+    .title {
+        margin: 20px;
+        font-size: 24px;
+        color: #333;
+    }
+
+    .reset-button {
+        margin: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .reset-button:hover {
+        background-color: #1976D2;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .reset-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        max-width: 500px;
+        width: 90%;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .close-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    }
+
+    .editor-panel {
+        display: none;
+        position: fixed;
+        right: 0;
+        top: 0;
+        width: 300px;
+        height: 100%;
+        background-color: white;
+        box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+        padding: 20px;
+        z-index: 900;
+    }
+
+    .password-section {
+        position: fixed;
+        right: 20px;
+        top: 20px;
+        z-index: 800;
+    }
+
+    .question-editor {
+        margin-top: 20px;
+    }
+
+    .question-editor textarea {
+        width: 100%;
+        height: 100px;
+        margin-bottom: 10px;
+    }
+
+    .close-editor-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        background-color: #f44336;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .reset-password-input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .reset-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .reset-confirm-btn,
+    .reset-cancel-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .reset-confirm-btn {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .reset-cancel-btn {
+        background-color: #f44336;
+        color: white;
+    }
+</style>
+
+<body>
+    <h1 class="title">任务抽取系统</h1>
+    <div class="grid-container" id="grid"></div>
+    <button class="reset-button" onclick="showResetModal()">重置所有题目</button>
+
+    <div class="password-section">
+        <input type="password" id="password" placeholder="输入密码">
+        <button onclick="checkPassword()">打开编辑器</button>
+    </div>
+
+    <div class="editor-panel" id="editorPanel">
+        <button class="close-editor-btn" onclick="closeEditor()">×</button>
+        <h2>题目编辑器</h2>
+        <div class="question-editor">
+            <select id="questionSelect"></select>
+            <textarea id="questionContent" placeholder="输入题目内容"></textarea>
+            <button onclick="saveQuestion()">保存题目</button>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">×</span>
+            <h2>题目内容</h2>
+            <p id="modalContent"></p>
+        </div>
+    </div>
+
+    <div id="resetModal" class="reset-modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeResetModal()">×</span>
+            <h2>重置确认</h2>
+            <p>请输入重置密码：</p>
+            <input type="password" id="resetPassword" class="reset-password-input">
+            <div class="reset-buttons">
+                <button class="reset-cancel-btn" onclick="closeResetModal()">取消</button>
+                <button class="reset-confirm-btn" onclick="confirmReset()">确认重置</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let questions = {};
+        const clickCounts = {};
+
+        function loadQuestions() {
+            const savedQuestions = localStorage.getItem('questions');
+            if (savedQuestions) {
+                questions = JSON.parse(savedQuestions);
+            }
+            const savedClickCounts = localStorage.getItem('clickCounts');
+            if (savedClickCounts) {
+                Object.assign(clickCounts, JSON.parse(savedClickCounts));
+            }
+        }
+
+        function saveQuestions() {
+            localStorage.setItem('questions', JSON.stringify(questions));
+            localStorage.setItem('clickCounts', JSON.stringify(clickCounts));
+        }
+
+        function showResetModal() {
+            document.getElementById('resetModal').style.display = 'flex';
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModal').style.display = 'none';
+            document.getElementById('resetPassword').value = '';
+        }
+
+        function confirmReset() {
+            const password = document.getElementById('resetPassword').value;
+            if (password === '1234') {
+                resetGrid();
+                closeResetModal();
+            } else {
+                alert('密码错误！');
+            }
+        }
+
+        function createGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 81; i++) {
+                const box = document.createElement('div');
+                box.className = 'number-box';
+                box.textContent = i;
+                
+                if (clickCounts[i] && clickCounts[i] > 0) {
+                    box.classList.add('selected');
+                    box.setAttribute('data-clicks', clickCounts[i]);
+                    
+                    if (clickCounts[i] >= 2) {
+                        const counter = document.createElement('span');
+                        counter.className = 'click-count';
+                        counter.textContent = clickCounts[i];
+                        box.appendChild(counter);
+                    }
+                }
+                
+                box.onclick = () => showQuestion(i);
+                grid.appendChild(box);
+            }
+        }
+
+        function showQuestion(number) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modalContent');
+            modalContent.textContent = questions[number] || `题目 ${number} 的内容`;
+            modal.style.display = 'flex';
+            
+            clickCounts[number] = (clickCounts[number] || 0) + 1;
+            saveQuestions();
+            createGrid();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function resetGrid() {
+            Object.keys(clickCounts).forEach(key => delete clickCounts[key]);
+            saveQuestions();
+            createGrid();
+            alert('重置成功！');
+        }
+
+        function checkPassword() {
+            const password = document.getElementById('password').value;
+            if (password === '112358') {
+                document.getElementById('editorPanel').style.display = 'block';
+                initializeEditor();
+            } else {
+                alert('密码错误！');
+            }
+        }
+
+        function closeEditor() {
+            document.getElementById('editorPanel').style.display = 'none';
+            document.getElementById('password').value = '';
+        }
+
+        function initializeEditor() {
+            const select = document.getElementById('questionSelect');
+            select.innerHTML = '';
+            for (let i = 1; i <= 81; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `题目 ${i}`;
+                select.appendChild(option);
+            }
+            
+            select.onchange = () => {
+                const number = select.value;
+                document.getElementById('questionContent').value = questions[number] || '';
+            };
+            
+            const number = select.value;
+            document.getElementById('questionContent').value = questions[number] || '';
+        }
+
+        function saveQuestion() {
+            const number = document.getElementById('questionSelect').value;
+            const content = document.getElementById('questionContent').value;
+            questions[number] = content;
+            saveQuestions();
+            alert('保存成功！');
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            const resetModal = document.getElementById('resetModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+            if (event.target == resetModal) {
+                resetModal.style.display = 'none';
+            }
+        }
+
+        loadQuestions();
+        createGrid();
+    </script>
+</body></html>
